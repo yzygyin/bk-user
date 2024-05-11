@@ -20,8 +20,8 @@
           <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
         </div>
         <div class="tenant-style" v-if="!isTenant">
-          <span class="logo">{{ logoConvert(userStore.user?.tenant_id) }}</span>
-          <span class="tenant-id">{{ userStore.user?.tenant_id }}</span>
+          <span class="logo">{{ userData?.logo || logoConvert(userData?.name) }}</span>
+          <bk-overflow-title type="tips" class="tenant-id">{{ userData?.name }}</bk-overflow-title>
           <i
             v-if="userStore.user?.role === 'super_manager'"
             class="user-icon icon-shezhi"
@@ -128,7 +128,7 @@
 <script setup lang="ts">
 import { DownShape } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
 import NoticeComponent from '@blueking/notice-component';
@@ -141,7 +141,7 @@ import I18n, { t } from '@/language/index';
 import router from '@/router';
 import { useUser } from '@/store';
 import { logoConvert } from '@/utils';
-import { getVersionLogs } from '@/http';
+import { getVersionLogs, getTenantInfo } from '@/http';
 
 const state = reactive({
   logoutDropdown: false,
@@ -218,6 +218,14 @@ const toTenant = () => {
   router.push({ name: 'tenant' });
   headerNav.value = [];
 };
+const userData = ref({});
+const initTenantInfo = async () => {
+  const res = await getTenantInfo();
+  userData.value = res.data;
+};
+onMounted(() => {
+  initTenantInfo();
+});
 
 const onGoBack = () => {
   const { role } = userStore.user;
@@ -303,6 +311,7 @@ const openVersionLog = async () => {
         .tenant-id {
           margin: 0 8px 0 4px;
           color: #FFF;
+          max-width: 150px;
         }
 
         .icon-shezhi {
