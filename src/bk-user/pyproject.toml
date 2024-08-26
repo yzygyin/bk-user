@@ -61,6 +61,7 @@ pytest = "^7.4.0"
 pytest-django = "^4.5.2"
 types-pytz = "^2023.3.0.0"
 import-linter = "^1.11.1"
+types-redis = "^4.6.0.20240806"
 
 [tool.mypy]
 ignore_missing_imports = true
@@ -138,6 +139,8 @@ ignore = [
     # raise-without-from-inside-except
     "B904"
 ]
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**.py" = ["PLR2004"]
 
 [tool.ruff.lint.mccabe]
 # Unlike Flake8, default to a complexity level of 10.

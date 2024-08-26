@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 from .departments import (
     OptionalTenantDepartmentListApi,
     TenantDepartmentListCreateApi,
+    TenantDepartmentParentUpdateApi,
     TenantDepartmentSearchApi,
     TenantDepartmentUpdateDestroyApi,
 )
@@ -27,16 +28,21 @@ from .tenants import (
 )
 from .users import (
     OptionalTenantUserListApi,
+    TenantUserAccountExpiredAtBatchUpdateApi,
     TenantUserAccountExpiredAtUpdateApi,
     TenantUserBatchCreateApi,
     TenantUserBatchCreatePreviewApi,
     TenantUserBatchDeleteApi,
+    TenantUserCustomFieldBatchUpdateApi,
+    TenantUserLeaderBatchUpdateApi,
     TenantUserListCreateApi,
     TenantUserOrganizationPathListApi,
+    TenantUserPasswordBatchResetApi,
     TenantUserPasswordResetApi,
     TenantUserPasswordRuleRetrieveApi,
     TenantUserRetrieveUpdateDestroyApi,
     TenantUserSearchApi,
+    TenantUserStatusBatchUpdateApi,
     TenantUserStatusUpdateApi,
 )
 
@@ -50,6 +56,7 @@ __all__ = [
     "TenantDepartmentUpdateDestroyApi",
     "TenantDepartmentSearchApi",
     "OptionalTenantDepartmentListApi",
+    "TenantDepartmentParentUpdateApi",
     # 租户用户
     "OptionalTenantUserListApi",
     "TenantUserSearchApi",
@@ -62,6 +69,11 @@ __all__ = [
     "TenantUserBatchCreateApi",
     "TenantUserBatchCreatePreviewApi",
     "TenantUserBatchDeleteApi",
+    "TenantUserStatusBatchUpdateApi",
+    "TenantUserAccountExpiredAtBatchUpdateApi",
+    "TenantUserCustomFieldBatchUpdateApi",
+    "TenantUserLeaderBatchUpdateApi",
+    "TenantUserPasswordBatchResetApi",
     "TenantUserAccountExpiredAtUpdateApi",
     # 租户部门 - 用户关系
     "TenantDeptUserRelationBatchCreateApi",

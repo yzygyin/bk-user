@@ -274,6 +274,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "bkuser.apps.notification.tasks.build_and_run_notify_password_expired_users_task",
         "schedule": crontab(minute="30", hour="10"),
     },
+    "mark_running_sync_task_as_failed_if_exceed_one_day": {
+        "task": "bkuser.apps.sync.periodic_tasks.mark_running_sync_task_as_failed_if_exceed_one_day",
+        "schedule": crontab(minute="0", hour="9"),
+    },
 }
 # Celery 消息队列配置
 CELERY_BROKER_URL = env.str("BK_BROKER_URL", default="")
@@ -612,7 +616,7 @@ GENERATE_RANDOM_PASSWORD_MAX_RETRIES = env.int("GENERATE_RANDOM_PASSWORD_MAX_RET
 # zxcvbn 会对密码进行总体强度评估（score [0, 4]），建议限制不能使用评分低于 3 的密码
 MIN_ZXCVBN_PASSWORD_SCORE = env.int("MIN_ZXCVBN_PASSWORD_SCORE", 3)
 
-# 在重置密码是是否允许抛出具体错误信息给到用户（若启用需确认没有被攻击的风险）
+# 在重置密码时是否允许抛出具体错误信息给到用户（若启用需确认没有被攻击的风险）
 # TODO 评估接入 Captcha 验证码
 ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD = env.bool("ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD", False)
 # 短信验证码有效期，默认 5 min
@@ -630,6 +634,14 @@ RESET_PASSWORD_TOKEN_VALID_TIME = env.int("RESET_PASSWORD_TOKEN_VALID_TIME", 60 
 RESET_PASSWORD_TOKEN_LENGTH = env.int("RESET_PASSWORD_TOKEN_LENGTH", 128)
 # 重置密码 Token 每天最大发送次数
 RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY = env.int("RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY", 3)
+# 每个租户对个人中心手机号的更新限制 Note: 默认是 need_verify，无需配置。
+# 可配置的值有：(need_verify / editable_directly / not_editable)
+# 值格式："tenant_id1=not_editable,tenant_id2=editable_directly,..."
+TENANT_PHONE_UPDATE_RESTRICTIONS = env.dict("TENANT_PHONE_UPDATE_RESTRICTIONS", default={})
+# 每个租户对个人中心邮箱的更新限制 Note: 默认是 need_verify，无需配置。
+# 可配置的值有：(need_verify / editable_directly / not_editable)
+# 值格式："tenant_id1=not_editable,tenant_id2=editable_directly,..."
+TENANT_EMAIL_UPDATE_RESTRICTIONS = env.dict("TENANT_EMAIL_UPDATE_RESTRICTIONS", default={})
 
 # 数据导入/导出配置
 # 导入文件大小限制，单位为 MB
@@ -638,6 +650,11 @@ MAX_USER_DATA_FILE_SIZE = env.int("MAX_USER_DATA_FILE_SIZE", 10)
 EXPORT_EXCEL_FILENAME_PREFIX = "bk_user_export"
 # 成员，组织信息导出模板
 EXPORT_ORG_TEMPLATE = MEDIA_ROOT / "excel/export_org_tmpl.xlsx"
+
+# 数据源同步默认超时时间（秒）
+DATA_SOURCE_SYNC_DEFAULT_TIMEOUT = env.int("DATA_SOURCE_SYNC_DEFAULT_TIMEOUT", 30 * 60)
+# 租户同步默认超时时间（秒）
+TENANT_SYNC_DEFAULT_TIMEOUT = env.int("TENANT_SYNC_DEFAULT_TIMEOUT", 10 * 60)
 
 # 限制组织架构页面用户/部门搜索 API 返回的最大条数
 # 由于需要计算组织路径导致性能不佳，建议不要太高，而是让用户细化搜索条件

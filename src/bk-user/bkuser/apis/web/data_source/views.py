@@ -29,6 +29,7 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourceImportOrSyncOutputSLZ,
     DataSourceListInputSLZ,
     DataSourceListOutputSLZ,
+    DataSourcePluginConfigMetaRetrieveOutputSLZ,
     DataSourcePluginDefaultConfigOutputSLZ,
     DataSourcePluginOutputSLZ,
     DataSourceRandomPasswordInputSLZ,
@@ -71,6 +72,8 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
+
+from .schema import get_data_source_plugin_cfg_json_schema
 
 logger = logging.getLogger(__name__)
 
@@ -257,13 +260,16 @@ class DataSourceRetrieveUpdateDestroyApi(
         logger.warning("user %s delete data source %s", request.user.username, data_source.id)
 
         with transaction.atomic():
-            idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
             if is_delete_idp:
-                # 删除本地以及其他认证源，并清除对应的敏感信息
-                waiting_delete_idps = Idp.objects.filter(**idp_filters)
+                # 删除本地以及其他认证源，包括已禁用的认证源，并清除对应的敏感信息
+                waiting_delete_idps = Idp.objects.filter(
+                    owner_tenant_id=data_source.owner_tenant_id,
+                    data_source_id__in=[INVALID_REAL_DATA_SOURCE_ID, data_source.id],
+                )
                 IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
                 waiting_delete_idps.delete()
             else:
+                idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
                 # 对于本地认证源则删除，因为不确定下个数据源是否为本地数据源，并清除对应的敏感信息
                 waiting_delete_idps = Idp.objects.filter(**idp_filters, plugin_id=BuiltinIdpPluginEnum.LOCAL)
                 IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
@@ -585,3 +591,27 @@ class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveA
     )
     def get(self, request, *args, **kwargs):
         return Response(DataSourceSyncRecordRetrieveOutputSLZ(instance=self.get_object()).data)
+
+
+class DataSourcePluginConfigMetaRetrieveApi(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    queryset = DataSourcePlugin.objects.all()
+    lookup_url_kwarg = "id"
+
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="数据源插件配置元数据",
+        responses={status.HTTP_200_OK: DataSourcePluginConfigMetaRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        plugin = self.get_object()
+
+        try:
+            json_schema = get_data_source_plugin_cfg_json_schema(plugin.id)
+        except NotImplementedError:
+            raise error_codes.DATA_SOURCE_PLUGIN_NOT_LOAD
+
+        return Response(
+            DataSourcePluginConfigMetaRetrieveOutputSLZ(instance={"id": plugin.id, "json_schema": json_schema}).data
+        )
